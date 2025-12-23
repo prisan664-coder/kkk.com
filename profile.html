@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCBC Digital Bank - Profile</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: #f4f7fa;
+            color: #333;
+        }
+
+        /* Navbar ปรับแต่งให้โมเดิร์น */
+        nav {
+            background: linear-gradient(90deg, #0052cc, #003d99);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: #fff;
+            border-radius: 25px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            margin-top: -50px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-bg {
+            background: #0052cc;
+            height: 150px;
+            border-radius: 0 0 40px 40px;
+        }
+
+        .avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 5px solid #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-top: -85px;
+            background: #fff;
+        }
+
+        .balance-box {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid #e0e6ed;
+        }
+
+        .balance-amount {
+            font-size: 2rem;
+            font-weight: 500;
+            color: #0052cc;
+        }
+
+        /* ปุ่มต่างๆ */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-custom {
+            padding: 12px 5px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: 400;
+            transition: 0.3s;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-deposit {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .btn-withdraw {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .btn-verify {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .btn-history {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .btn-miner {
+            background: #2ecc71;
+            color: #fff;
+            grid-column: span 2;
+        }
+
+        /* ตารางประวัติ */
+        .history-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .table-dark-custom thead {
+            background: #343a40;
+            color: #fff;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 12px;
+        }
+
+        /* ปรับแต่งสำหรับมือถือ */
+        @media (max-width: 576px) {
+            .balance-amount {
+                font-size: 1.6rem;
+            }
+
+            .profile-card {
+                margin-left: 15px;
+                margin-right: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <li class="nav-item"><a class="nav-link" href="#">OCBC Digital Bank</a></li>
+        
+            <button class="btn btn-sm btn-outline-light" id="logoutBtn">Logout</button>
+        </div>
+    </nav>
+
+    <div class="header-bg"></div>
+
+    <div class="container">
+        <div class="profile-card text-center">
+            <img src="https://api.dicebear.com/9.x/adventurer/svg?seed=Kham" alt="Avatar" class="avatar">
+
+            <h4 id="userName" class="mt-2">...</h4>
+            <p class="text-muted mb-0" id="userEmail" style="font-size: 14px;">-</p>
+            <p class="text-muted" id="userPhone" style="font-size: 14px;">-</p>
+
+            <div class="balance-box">
+                <small class="text-uppercase" style="letter-spacing: 1px;">ยอดเงินคงเหลือ (USD)</small>
+                <div class="balance-amount">$ <span id="balance">0.00</span></div>
+            </div>
+
+            <div class="action-grid">
+                <button class="btn-custom btn-deposit" id="depositBtn">
+                    <span>💰</span> ฝากเงิน
+                </button>
+                <button class="btn-custom btn-withdraw" id="withdrawBtn">
+                    <span>💸</span> ถอนเงิน
+                </button>
+                <button class="btn-custom btn-history" onclick="window.location.href='history.html'">
+                    <span>📜</span> ประวัติ
+                </button>
+                <button class="btn-custom btn-verify" onclick="window.location.href='verify.html'">
+                    <span>🔒</span> ยืนยันตัวตน
+                </button>
+                <button class="btn-custom btn-miner" onclick="window.location.href='#'">
+                    ⛏️ ขุดเหมือง BTC (Miner)
+                </button>
+            </div>
+        </div>
+
+        <div class="history-card">
+            <h5 class="mb-3 text-center">💱 ซื้อเงินตราต่างประเทศ</h5>
+            <div class="form-group">
+                <select id="currencySelect" class="form-control">
+                    <option value="CNY">CNY - หยวนจีน</option>
+                    <option value="USD">USD - ดอลลาร์สหรัฐ</option>
+                    <option value="BTC">BTC - บิตคอยน์</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="number" id="purchaseAmount" class="form-control" placeholder="ระบุจำนวนเงินที่ต้องการเทรด">
+            </div>
+            <div class="form-group">
+                <select id="periodSelect" class="form-control">
+                    <option value="0.07">7 วัน – กำไร 7%</option>
+                    <option value="0.12">1 เดือน – กำไร 12%</option>
+                    <option value="0.40">3 ปี – กำไร 40%</option>
+                </select>
+            </div>
+            <button class="btn btn-primary btn-block btn-lg" id="tradeBtn"
+                style="border-radius: 15px;">เริ่มการเทรด</button>
+        </div>
+
+        <div class="history-card mb-5">
+            <h6 class="mb-3">นักลงทุนล่าสุดในระบบ</h6>
+            <div class="table-responsive">
+                <table class="table table-sm" id="membersTable" style="font-size: 13px;">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th class="text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">© 2004 – 2025 OCBC Bank. All Rights Reserved.</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getDatabase, ref, get, update, push, onValue } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGZmA7ND52gIKsaUfjprUVW7QZdeU-Kf8",
+            authDomain: "investment-94563.firebaseapp.com",
+            databaseURL: "https://investment-94563-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "investment-94563",
+            storageBucket: "investment-94563.firebasestorage.app",
+            messagingSenderId: "566596545320",
+            appId: "1:566596545320:web:7469c13e5e59579be1fe1d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const loggedInUser = JSON.parse(sessionStorage.getItem("loggedInUser"));
+        if (!loggedInUser) { window.location.href = "index.html"; }
+
+        const userEmailKey = loggedInUser.email.replace(/\./g, '_');
+        const userRef = ref(db, 'users/' + userEmailKey);
+
+        onValue(userRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById("userName").textContent = data.username || "Member";
+                document.getElementById("userEmail").textContent = data.email;
+                document.getElementById("userPhone").textContent = "Tel: " + (data.phone || "-");
+                document.getElementById("balance").textContent = (data.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+            }
+        });
+
+        // --- ระบบสุ่มรายชื่อ ---
+        function generateRandomMembers() {
+            const tbody = document.querySelector("#membersTable tbody");
+            tbody.innerHTML = "";
+            for (let i = 0; i < 5; i++) {
+                const e = Math.random().toString(36).substring(2, 7) + "***@gmail.com";
+                const b = (Math.random() * 15000 + 500).toLocaleString();
+                tbody.innerHTML += `<tr><td>${e}</td><td class="text-right text-success">$${b}</td></tr>`;
+            }
+        }
+        generateRandomMembers();
+        setInterval(generateRandomMembers, 8000);
+
+        // --- ฟังก์ชันอัปเดตยอดเงิน + แจ้งเตือนสวยๆ ---
+        async function handleTransaction(amount, type) {
+            const snap = await get(userRef);
+            const currentBalance = snap.val().balance || 0;
+            const newBalance = currentBalance + amount;
+
+            if (newBalance < 0) {
+                return Swal.fire({ icon: 'error', title: 'ยอดเงินไม่เพียงพอ!', text: 'กรุณาตรวจสอบยอดเงินของคุณ' });
+            }
+
+            await update(userRef, { balance: newBalance });
+            await push(ref(db, 'transactions/' + userEmailKey), {
+                type: type,
+                amount: Math.abs(amount),
+                date: new Date().toLocaleString(),
+                status: "Success"
+            });
+
+            Swal.fire({
+                icon: 'success',
+                title: 'สำเร็จ!',
+                text: `${type} เรียบร้อยแล้ว`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+
+        document.getElementById("depositBtn").onclick = async () => {
+            const { value: amount } = await Swal.fire({
+                title: 'ฝากเงิน (Deposit)',
+                input: 'number',
+                inputLabel: 'กรุณากรอกจำนวนเงิน (USD)',
+                inputPlaceholder: '0.00',
+                showCancelButton: true
+            });
+            if (amount && amount > 0) handleTransaction(parseFloat(amount), "Deposit");
+        };
+
+        document.getElementById("withdrawBtn").onclick = async () => {
+            const { value: amount } = await Swal.fire({
+                title: 'ถอนเงิน (Withdraw)',
+                input: 'number',
+                inputLabel: 'กรุณากรอกจำนวนเงิน (USD)',
+                inputPlaceholder: '0.00',
+                showCancelButton: true
+            });
+            if (amount && amount > 0) handleTransaction(-parseFloat(amount), "Withdraw");
+        };
+
+        document.getElementById("tradeBtn").onclick = async () => {
+            const amountInput = document.getElementById("purchaseAmount");
+            const amount = parseFloat(amountInput.value);
+            const rate = parseFloat(document.getElementById("periodSelect").value);
+
+            if (!amount || amount <= 0) {
+                return Swal.fire({ icon: 'warning', title: 'ຂໍ້ມູນບໍ່ຄົບຖ້ວນ!', text: 'ກະລຸນາປ້ອນຂໍ້ມູນໃຫ້ຄົບຖ້ວນ!' }); // แสดงข้อความเหมือนภาพตัวอย่าง
+            }
+
+            const profit = amount * rate;
+            await handleTransaction(profit, "Trade Profit");
+            amountInput.value = "";
+        };
+
+        document.getElementById("logoutBtn").onclick = () => {
+            sessionStorage.clear();
+            window.location.href = "index.html";
+        };
+    </script>
+</body>
+
+</html>

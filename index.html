@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>OCBC Digital Bank - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0052cc, #1a73e8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .login-box {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-container {
+            margin-bottom: 15px;
+        }
+
+        .logo-container img {
+            width: 120px;
+        }
+
+        .btn-primary {
+            border-radius: 10px;
+            width: 100%;
+            font-weight: bold;
+            padding: 10px;
+        }
+
+        .form-control {
+            border-radius: 8px;
+        }
+
+        .links {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-box">
+        <div class="logo-container">
+            <img src="Image/Bank_logo.png" alt="Bank Logo">
+            <figcaption style="font-size: 18px; color: #333; margin-top: 10px; font-weight: 500;">
+                OCBC Digital Bank for you
+            </figcaption>
+        </div>
+        <h4 class="mb-3">User Login</h4>
+        <form id="loginForm">
+            <input type="email" id="email" class="form-control my-2" placeholder="Email Address" required>
+            <input type="password" id="password" class="form-control my-2" placeholder="Password" required>
+            <button type="submit" class="btn btn-primary my-3">Login</button>
+            <div class="links">
+                <a href="forget-password.html">Forgot Password?</a> |
+                <a href="signup.html">Sign Up</a> |
+                <a href="admin-login.html">admin-login</a>
+            </div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+        // ✅ ใช้ Config ตัวเดียวกับที่ใช้ใน Profile และ Signup
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGZmA7ND52gIKsaUfjprUVW7QZdeU-Kf8",
+            authDomain: "investment-94563.firebaseapp.com",
+            databaseURL: "https://investment-94563-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "investment-94563",
+            storageBucket: "investment-94563.firebasestorage.app",
+            messagingSenderId: "566596545320",
+            appId: "1:566596545320:web:7469c13e5e59579be1fe1d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        document.getElementById('loginForm').addEventListener('submit', async e => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const password = document.getElementById('password').value.trim();
+
+            // เปลี่ยนจุดในเมลเป็นขีดล่างเหมือนตอน Signup
+            const userEmailKey = email.replace(/\./g, '_');
+
+            try {
+                // ดึงข้อมูล User จาก Path ที่ระบุด้วยอีเมลโดยตรง
+                const userRef = ref(db, `users/${userEmailKey}`);
+                const snapshot = await get(userRef);
+
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+
+                    // ตรวจสอบรหัสผ่าน
+                    if (userData.password === password) {
+                        alert("เข้าสู่ระบบสำเร็จ!");
+
+                        // ✅ เก็บข้อมูลลง sessionStorage เพื่อใช้ในหน้าอื่นๆ
+                        sessionStorage.setItem("loggedInUser", JSON.stringify({
+                            email: userData.email,
+                            username: userData.username,
+                            phone: userData.phone || ""
+                        }));
+
+                        window.location.href = "dashboard.html";
+                    } else {
+                        alert("รหัสผ่านไม่ถูกต้อง!");
+                    }
+                } else {
+                    alert("ไม่พบข้อมูลผู้ใช้งานในระบบ!");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("เกิดข้อผิดพลาดในการเข้าสู่ระบบ!");
+            }
+        });
+    </script>
+</body>
+
+</html>

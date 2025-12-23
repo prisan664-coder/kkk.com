@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | OCBC Digital Bank</title>
+
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            background: linear-gradient(135deg, #0052cc, #00bfa6);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        .login-box {
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            text-align: center;
+        }
+
+        .logo-container img {
+            width: 120px;
+            margin-bottom: 10px;
+        }
+
+        .logo-container figcaption {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        h2 {
+            color: #0052cc;
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            box-sizing: border-box;
+            /* ป้องกัน input ล้นขอบ */
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background: #0052cc;
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #003d99;
+        }
+
+        .error {
+            color: #ff4b4b;
+            font-size: 14px;
+            margin-top: 15px;
+            min-height: 20px;
+        }
+
+        a {
+            color: #0052cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-box">
+        <div class="logo-container">
+            <img src="Image/Bank_logo.png" alt="Bank Logo">
+            <figcaption>OCBC Digital Bank for you</figcaption>
+        </div>
+
+        <h2>Admin Login</h2>
+        <form id="adminLoginForm">
+            <input type="email" id="email" placeholder="Admin Email Address" required>
+            <input type="password" id="password" placeholder="Password for Admin" required>
+            <button type="submit">Log in</button>
+        </form>
+        <p class="error" id="error-msg"></p>
+        <p style="margin-top: 15px; font-size: 14px;">Back to <a href="index.html">User Login</a></p>
+    </div>
+
+    <script>
+        // กำหนดข้อมูล Admin (สามารถเปลี่ยนเป็นดึงจาก Firebase ได้ในอนาคต)
+        const ADMIN_EMAIL = "khamadmin_OCBC@gmail.com";
+        const ADMIN_PASSWORD = "admin_OCBC123";
+
+        const loginForm = document.getElementById("adminLoginForm");
+        const errorMsg = document.getElementById("error-msg");
+
+        loginForm.addEventListener("submit", (e) => {
+            e.preventDefault(); // ป้องกันการ Refresh หน้าจอ
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+                // ✅ ใช้ sessionStorage เพื่อให้สอดคล้องกับหน้า admin-dashboard
+                sessionStorage.setItem("isAdminLoggedIn", "true");
+
+                alert("เข้าสู่ระบบแอดมินสำเร็จ!");
+                window.location.href = "admin-dashboard.html";
+            } else {
+                errorMsg.textContent = "❌ อีเมลหรือรหัสผ่านแอดมินไม่ถูกต้อง";
+            }
+        });
+
+        // ตรวจสอบสถานะถ้าล็อกอินค้างไว้ (Session ยังไม่หมดอายุ)
+        window.onload = () => {
+            if (sessionStorage.getItem("isAdminLoggedIn") === "true") {
+                window.location.href = "admin-dashboard.html";
+            }
+        };
+    </script>
+</body>
+
+</html>

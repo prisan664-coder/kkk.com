@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCBC Digital Bank - Verify Your Identity</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f1f3f6;
+        }
+
+        nav {
+            background-color: #0052cc;
+        }
+
+        nav a.navbar-brand,
+        nav .nav-link {
+            color: #fff !important;
+            font-weight: 500;
+        }
+
+        .verify-box,
+        .verification-list {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px auto;
+            max-width: 700px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .verify-box h4 {
+            margin-bottom: 20px;
+            color: #0052cc;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .doc-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .doc-images img {
+            max-width: 48%;
+            height: auto;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .footer {
+            background: #0052cc;
+            color: #fff;
+            text-align: center;
+            padding: 15px 0;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="dashboard.html">OCBC Digital Bank</a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
+                <li class="nav-item"><a class="nav-link text-warning" href="#" id="logoutBtn">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container verify-box" id="verifyFormContainer">
+        <h4>Verify Your Identity</h4>
+        <p class="text-muted">กรุณากรอกข้อมูลให้ตรงตามบัตรประชาชนหรือเอกสารยืนยันตัวตน</p>
+        <form id="verifyForm">
+            <div class="form-row">
+                <div class="col-md-6"><input type="text" class="form-control" id="firstName" placeholder="First Name"
+                        required></div>
+                <div class="col-md-6"><input type="text" class="form-control" id="lastName" placeholder="Last Name"
+                        required></div>
+            </div>
+            <input type="number" class="form-control" id="age" placeholder="Age" required>
+            <input type="text" class="form-control" id="house" placeholder="House / Street" required>
+            <input type="text" class="form-control" id="city" placeholder="City / Province" required>
+            <input type="tel" class="form-control" id="phone" placeholder="Phone Number" required>
+            <div class="form-group">
+                <label>Upload Document Front (รูปด้านหน้าบัตร)</label>
+                <input type="file" class="form-control-file" id="docFront" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label>Upload Document Back (รูปด้านหลังบัตร)</label>
+                <input type="file" class="form-control-file" id="docBack" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block py-2">Submit Verification</button>
+        </form>
+    </div>
+
+    <div class="container verification-list" id="verificationList" style="display:none;">
+        <div class="d-flex justify-content-between">
+            <h4>Verification Status</h4>
+            <div id="statusArea"></div>
+        </div>
+        <hr>
+        <div id="verificationDetails"></div>
+        <div class="doc-images" id="imageArea"></div>
+    </div>
+
+    <div class="footer">© 2025 OCBC Bank. All Rights Reserved.</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGZmA7ND52gIKsaUfjprUVW7QZdeU-Kf8",
+            authDomain: "investment-94563.firebaseapp.com",
+            databaseURL: "https://investment-94563-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "investment-94563",
+            storageBucket: "investment-94563.firebasestorage.app",
+            messagingSenderId: "566596545320",
+            appId: "1:566596545320:web:7469c13e5e59579be1fe1d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const loggedInUser = JSON.parse(sessionStorage.getItem("loggedInUser"));
+        if (!loggedInUser) {
+            window.location.href = "index.html";
+        }
+
+        const userEmailKey = loggedInUser.email.replace(/\./g, '_');
+        const verifyRef = ref(db, `verifications/${userEmailKey}`);
+
+        // ดึงข้อมูลการยืนยันตัวตนมาแสดงผล
+        onValue(verifyRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                document.getElementById("verifyFormContainer").style.display = "none";
+                document.getElementById("verificationList").style.display = "block";
+
+                let statusColor = data.status === 'Verified' ? 'bg-success' : 'bg-warning text-dark';
+                document.getElementById("statusArea").innerHTML = `<span class="status-badge ${statusColor}">${data.status}</span>`;
+
+                document.getElementById("verificationDetails").innerHTML = `
+                    <p><strong>Name:</strong> ${data.firstName} ${data.lastName}</p>
+                    <p><strong>Phone:</strong> ${data.phone}</p>
+                    <p><strong>Submitted on:</strong> ${data.submittedAt}</p>
+                `;
+                document.getElementById("imageArea").innerHTML = `
+                    <img src="${data.docFront}" alt="Front">
+                    <img src="${data.docBack}" alt="Back">
+                `;
+            }
+        });
+
+        // ฟังก์ชันแปลงรูปภาพเป็น Base64
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        document.getElementById("verifyForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            try {
+                const docFrontFile = document.getElementById("docFront").files[0];
+                const docBackFile = document.getElementById("docBack").files[0];
+
+                const base64Front = await toBase64(docFrontFile);
+                const base64Back = await toBase64(docBackFile);
+
+                const verifyData = {
+                    firstName: document.getElementById("firstName").value,
+                    lastName: document.getElementById("lastName").value,
+                    age: document.getElementById("age").value,
+                    house: document.getElementById("house").value,
+                    city: document.getElementById("city").value,
+                    phone: document.getElementById("phone").value,
+                    docFront: base64Front,
+                    docBack: base64Back,
+                    status: "Pending",
+                    submittedAt: new Date().toLocaleString()
+                };
+
+                await set(verifyRef, verifyData);
+                alert("✅ ส่งข้อมูลยืนยันตัวตนสำเร็จ! โปรดรอแอดมินตรวจสอบ");
+
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        });
+
+        document.getElementById("logoutBtn").onclick = () => {
+            sessionStorage.clear();
+            window.location.href = "index.html";
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCBC Admin - Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #0052cc;
+            color: #fff;
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logout-btn {
+            background: #ff4b4b;
+            border: none;
+            padding: 8px 15px;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #0052cc;
+            color: #fff;
+            position: sticky;
+            top: 0;
+        }
+
+        h2 {
+            color: #0052cc;
+            border-left: 5px solid #0052cc;
+            padding-left: 10px;
+            margin: 25px 0;
+        }
+
+        /* สไตล์สำหรับรูปภาพ KYC */
+        .kyc-img {
+            width: 100px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .kyc-img:hover {
+            transform: scale(3.5);
+            z-index: 100;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .bg-success {
+            background: #28a745;
+        }
+
+        .bg-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .bg-danger {
+            background: #dc3545;
+        }
+
+        .btn-action {
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            margin-right: 5px;
+        }
+
+        .btn-approve {
+            background: #28a745;
+        }
+
+        .btn-reject {
+            background: #dc3545;
+        }
+
+        .btn-edit {
+            background: #17a2b8;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1><i class="fas fa-tools"></i> OCBC Admin Control</h1>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+    </header>
+
+    <div class="container">
+
+        <h2><i class="fas fa-id-card-alt"></i> 1. ตารางตรวจสอบการยืนยันตัวตน (KYC Verification)</h2>
+        <table id="kycListTable">
+            <thead>
+                <tr>
+                    <th>Email ผู้ส่ง</th>
+                    <th>ชื่อ - นามสกุล</th>
+                    <th>รูปด้านหน้า</th>
+                    <th>รูปด้านหลัง</th>
+                    <th>สถานะปัจจุบัน</th>
+                    <th>วันที่ส่ง</th>
+                    <th>จัดการอนุมัติ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="7" style="text-align:center;">กำลังโหลดข้อมูล KYC...</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2><i class="fas fa-users"></i> 2. รายชื่อสมาชิกและยอดเงิน (User Management)</h2>
+        <table id="membersTable">
+            <thead>
+                <tr>
+                    <th>ชื่อสมาชิก</th>
+                    <th>อีเมล</th>
+                    <th>ยอดเงิน ($)</th>
+                    <th>รหัสผ่าน</th>
+                    <th>แก้ไขข้อมูล</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h2><i class="fas fa-history"></i> 3. ประวัติธุรกรรมทั้งหมด (Transaction History)</h2>
+        <table id="allTransactionsTable">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>ประเภท</th>
+                    <th>จำนวน ($)</th>
+                    <th>วันที่</th>
+                    <th>ลบ</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGZmA7ND52gIKsaUfjprUVW7QZdeU-Kf8",
+            authDomain: "investment-94563.firebaseapp.com",
+            databaseURL: "https://investment-94563-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "investment-94563",
+            storageBucket: "investment-94563.firebasestorage.app",
+            messagingSenderId: "566596545320",
+            appId: "1:566596545320:web:7469c13e5e59579be1fe1d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- ส่วนการจัดการ KYC ---
+        window.updateKYCStatus = (emailKey, newStatus) => {
+            const statusText = newStatus === 'Verified' ? 'อนุมัติ' : 'ปฏิเสธ';
+            if (confirm(`คุณต้องการ ${statusText} ข้อมูลนี้ใช่หรือไม่?`)) {
+                update(ref(db, `verifications/${emailKey}`), { status: newStatus })
+                    .then(() => alert(`ดำเนินการ ${statusText} เรียบร้อยแล้ว`));
+            }
+        };
+
+        // 1. ดึงข้อมูล KYC ลงตารางใหม่
+        onValue(ref(db, 'verifications'), (snapshot) => {
+            const tbody = document.querySelector("#kycListTable tbody");
+            tbody.innerHTML = "";
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    const item = data[key];
+                    const tr = document.createElement("tr");
+                    let badgeColor = item.status === 'Verified' ? 'bg-success' : (item.status === 'Rejected' ? 'bg-danger' : 'bg-warning');
+
+                    tr.innerHTML = `
+                        <td>${key.replace(/_/g, '.')}</td>
+                        <td>${item.firstName} ${item.lastName}</td>
+                        <td><img src="${item.docFront}" class="kyc-img"></td>
+                        <td><img src="${item.docBack}" class="kyc-img"></td>
+                        <td><span class="badge ${badgeColor}">${item.status}</span></td>
+                        <td><small>${item.submittedAt || '-'}</small></td>
+                        <td>
+                            <button class="btn-action btn-approve" onclick="updateKYCStatus('${key}', 'Verified')"><i class="fas fa-check"></i></button>
+                            <button class="btn-action btn-reject" onclick="updateKYCStatus('${key}', 'Rejected')"><i class="fas fa-times"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>ยังไม่มีข้อมูลการยืนยันตัวตน</td></tr>";
+            }
+        });
+
+        // 2. ดึงข้อมูลสมาชิก (เดิม)
+        onValue(ref(db, 'users'), (snapshot) => {
+            const tbody = document.querySelector("#membersTable tbody");
+            tbody.innerHTML = "";
+            const users = snapshot.val();
+            if (users) {
+                Object.keys(users).forEach(key => {
+                    const user = users[key];
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${user.username || user.name}</td>
+                        <td>${user.email}</td>
+                        <td style="font-weight:bold; color:#0052cc;">$${(user.balance || 0).toLocaleString()}</td>
+                        <td>${user.password}</td>
+                        <td>
+                            <button class="btn-action btn-edit" onclick="editBalance('${key}')"><i class="fas fa-edit"></i> แก้ไขเงิน</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        });
+
+        // 3. ดึงธุรกรรม (เดิม)
+        onValue(ref(db, 'transactions'), (snapshot) => {
+            const tbody = document.querySelector("#allTransactionsTable tbody");
+            tbody.innerHTML = "";
+            const allTrans = snapshot.val();
+            if (allTrans) {
+                Object.keys(allTrans).forEach(userKey => {
+                    const transactions = allTrans[userKey];
+                    Object.keys(transactions).forEach(transId => {
+                        const record = transactions[transId];
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${userKey.replace(/_/g, '.')}</td>
+                            <td>${record.type}</td>
+                            <td>$${record.amount.toLocaleString()}</td>
+                            <td><small>${record.date}</small></td>
+                            <td><button class="btn-reject" onclick="deleteTrans('${userKey}', '${transId}')"><i class="fas fa-trash"></i></button></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                });
+            }
+        });
+
+        // ฟังก์ชันเสริม (ลบธุรกรรม / แก้ไขเงิน)
+        window.editBalance = (key) => {
+            const amt = prompt("ระบุยอดเงินใหม่:");
+            if (amt) update(ref(db, `users/${key}`), { balance: parseFloat(amt) });
+        };
+        window.deleteTrans = (userKey, id) => {
+            if (confirm("ลบรายการนี้?")) remove(ref(db, `transactions/${userKey}/${id}`));
+        };
+
+        document.getElementById("logoutBtn").onclick = () => {
+            sessionStorage.clear();
+            window.location.href = "admin-login.html";
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Transaction History - Firebase Sync</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f1f3f6;
+        }
+
+        nav {
+            background-color: #0052cc;
+        }
+
+        nav a.navbar-brand,
+        nav .nav-link {
+            color: #fff !important;
+            font-weight: 500;
+        }
+
+        .table-container {
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background-color: #ff4d4d;
+            color: #fff;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+
+        .btn-deposit-cancel {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+
+        .canceled {
+            text-decoration: line-through;
+            color: gray;
+            opacity: 0.6;
+        }
+
+        .footer {
+            background: #0052cc;
+            color: #fff;
+            text-align: center;
+            padding: 15px 0;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="dashboard.html">OCBC Digital Bank</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a class="nav-link" href="dashboard.html">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
+                <li class="nav-item"><a class="nav-link text-warning" href="#" id="logoutBtn">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container table-container">
+        <h4>📜 All Transaction History</h4>
+        <table class="table table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Details</th>
+                    <th>Amount / Profit</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody">
+                <tr>
+                    <td colspan="5" class="text-center">Loading history from Database...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">© 2004 – 2025 – OCBC Bank. All Rights Reserved.</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGZmA7ND52gIKsaUfjprUVW7QZdeU-Kf8",
+            authDomain: "investment-94563.firebaseapp.com",
+            databaseURL: "https://investment-94563-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "investment-94563",
+            storageBucket: "investment-94563.firebasestorage.app",
+            messagingSenderId: "566596545320",
+            appId: "1:566596545320:web:7469c13e5e59579be1fe1d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const loggedInUser = JSON.parse(sessionStorage.getItem("loggedInUser"));
+        if (!loggedInUser) window.location.href = "index.html";
+
+        const userEmailKey = loggedInUser.email.replace(/\./g, '_');
+        const userRef = ref(db, 'users/' + userEmailKey);
+        const historyRef = ref(db, 'transactions/' + userEmailKey);
+
+        // --- ดึงประวัติจาก Firebase มาแสดง ---
+        onValue(historyRef, (snapshot) => {
+            const tbody = document.getElementById("historyBody");
+            tbody.innerHTML = "";
+            const data = snapshot.val();
+
+            if (!data) {
+                tbody.innerHTML = "<tr><td colspan='5' class='text-center'>No transaction history found.</td></tr>";
+                return;
+            }
+
+            Object.entries(data).reverse().forEach(([key, record]) => {
+                const tr = document.createElement("tr");
+                if (record.status === "Canceled") tr.className = "canceled";
+
+                let actionBtn = record.status === "Canceled" ? "Canceled" : "-";
+
+                if (record.status !== "Canceled") {
+                    if (record.type === "Deposit") {
+                        actionBtn = `<button class="btn-deposit-cancel" onclick="cancelTransaction('${key}', 'Deposit', ${record.amount})">Cancel Deposit</button>`;
+                    } else if (record.type === "Trade Profit" || record.type === "Trade") {
+                        actionBtn = `<button class="btn-cancel" onclick="cancelTransaction('${key}', 'Trade', ${record.amount})">Cancel Trade</button>`;
+                    }
+                }
+
+                tr.innerHTML = `
+                    <td>${record.date}</td>
+                    <td>${record.type}</td>
+                    <td>${record.currency || "Account Update"}</td>
+                    <td>$${record.amount.toFixed(2)}</td>
+                    <td>${actionBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+
+        // --- ฟังก์ชันยกเลิกรายการและคืนเงิน/หักเงินใน Firebase ---
+        window.cancelTransaction = async (transId, type, amount) => {
+            if (!confirm(`Are you sure to cancel this ${type}?`)) return;
+
+            const userSnap = await get(userRef);
+            const currentBalance = userSnap.val().balance || 0;
+            let newBalance = currentBalance;
+
+            if (type === "Deposit") {
+                if (currentBalance < amount) return alert("Insufficient balance to cancel this deposit.");
+                newBalance -= amount; // ยกเลิกการฝาก ต้องหักเงินออก
+            } else {
+                newBalance -= amount; // ยกเลิกกำไรเทรด ต้องหักเงินออก
+            }
+
+            // อัปเดตยอดเงิน และเปลี่ยนสถานะในประวัติ
+            await update(userRef, { balance: newBalance });
+            await update(ref(db, `transactions/${userEmailKey}/${transId}`), { status: "Canceled" });
+
+            alert("Transaction canceled and balance updated.");
+        };
+
+        document.getElementById("logoutBtn").onclick = () => { sessionStorage.clear(); window.location.href = "index.html"; };
+    </script>
+</body>
+
+</html>
